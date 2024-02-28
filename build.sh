@@ -75,6 +75,11 @@ cat <<EOF >"$BUILD_SCRIPT"
     make install install-doc
 EOF
 
+# Log the build script contents
+echo "Displaying the contents of the build script:"
+cat "$BUILD_SCRIPT"
+echo "End of the build script contents."
+
 [[ -t 1 ]] && TTY_ARG="-t" || TTY_ARG=""
 
 docker run --rm -i $TTY_ARG "${UIDARGS[@]}" -v "$PWD/ffbuild":/ffbuild -v "$BUILD_SCRIPT":/build.sh "$IMAGE" bash /build.sh
