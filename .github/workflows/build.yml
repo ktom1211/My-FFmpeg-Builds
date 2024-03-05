@@ -251,6 +251,8 @@ jobs:
           name: ffmpeg-${{ steps.strs.outputs.artifact_slug }}
           overwrite: true
           path: artifacts/*
+    outputs:
+      artifact_slug: ${{ steps.strs.outputs.artifact_slug }}
   publish_release:
     name: Publish release
     if: ${{ !cancelled() && ( github.event_name == 'schedule' || github.event.inputs.doRelease == 'true' ) && needs.build_ffmpeg.result == 'success' }}
@@ -301,3 +303,27 @@ jobs:
         run: ./util/prunetags.sh
         env:
           GITHUB_TOKEN: ${{ github.token }}
+  commit_and_push:
+    name: Commit and Push Artifacts
+    needs: build_ffmpeg # Ensure this job runs after build_ffmpeg
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for all tags and branches
+    - name: Configure user name and email
+      run: |
+        git config user.name ${{ github.event.pusher.name }}
+        git config user.email ${{ github.event.pusher.email}}
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ffmpeg-${{ needs.build_ffmpeg.outputs.artifact_slug }}
+        path: FFmpeg.${{ needs.build_ffmpeg.outputs.artifact_slug }}/
+    - name: Add changes
+      run: git add FFmpeg.${{ needs.build_ffmpeg.outputs.artifact_slug }}/
+    - name: Commit changes
+      run: git commit -m "Automatically update build artifacts" || echo "No changes to commit"
+    - name: Push changes
+      run: git push
