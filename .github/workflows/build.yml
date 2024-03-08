@@ -2,6 +2,8 @@ name: Build FFmpeg
 
 on:
   push:
+    paths:
+      - 'FFmpeg.Build/**'
     paths-ignore:
       - '**.md'
       - 'LICENSE'
@@ -55,7 +57,7 @@ jobs:
       - name: Build target base image
         uses: docker/build-push-action@v5
         with:
-          context: images/base
+          context: FFmpeg.Build/images/base
           pull: true
           push: true
           provenance: false
@@ -67,7 +69,7 @@ jobs:
       - name: Get download cache key
         id: dl_cache
         run: |
-          echo "dltagname=$(./util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
+          echo "dltagname=$(./FFmpeg.Build/util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
       - name: Cache
         uses: actions/cache@v4
         with:
@@ -78,8 +80,8 @@ jobs:
       - name: Update Cache
         run: |
           set -e
-          ./download.sh
-          ./util/clean_cache.sh
+          ./FFmpeg.Build/download.sh
+          ./FFmpeg.Build/util/clean_cache.sh
       - name: Cleanup
         if: ${{ env.HAVE_CLEANUP_PAT == 'true' }}
         continue-on-error: true
@@ -127,7 +129,7 @@ jobs:
       - name: Build target base image
         uses: docker/build-push-action@v5
         with:
-          context: images/base-${{ matrix.target }}
+          context: FFmpeg.Build/images/base-${{ matrix.target }}
           pull: true
           push: true
           provenance: false
@@ -181,11 +183,11 @@ jobs:
       - name: Get download cache key
         id: dl_cache
         run: |
-          echo "dltagname=$(./util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
+          echo "dltagname=$(./FFmpeg.Build/util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
       - name: Stop Commands
         run: T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
       - name: Generate Dockerfile
-        run: ./generate.sh ${{ matrix.target }} ${{ matrix.variant }}
+        run: ./FFmpeg.Build/generate.sh ${{ matrix.target }} ${{ matrix.variant }}
       - name: Cache
         uses: actions/cache/restore@v4
         with:
@@ -239,7 +241,7 @@ jobs:
       - name: Build ffmpeg
         run: |
           T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
-          ./build.sh ${{ matrix.target }} ${{ matrix.variant }}
+          ./FFmpeg.Build/build.sh ${{ matrix.target }} ${{ matrix.variant }}
       - name: Replace spaces in string
         id: strs
         run: |
@@ -287,7 +289,7 @@ jobs:
           set -xe
           shopt -s nullglob
           mkdir latest_artifacts
-          ./util/repack_latest.sh latest_artifacts artifacts/*.{zip,tar.xz}
+          ./FFmpeg.Build/util/repack_latest.sh latest_artifacts artifacts/*.{zip,tar.xz}
           NAME="Latest Auto-Build (${{ steps.create_release.outputs.rel_date }})"
           TAGNAME="latest"
           gh release delete --cleanup-tag --yes "$TAGNAME" || true
@@ -300,7 +302,7 @@ jobs:
       #   env:
       #     GITHUB_TOKEN: ${{ github.token }}
       - name: Prune old releases
-        run: ./util/prunetags.sh
+        run: ./FFmpeg.Build/util/prunetags.sh
         env:
           GITHUB_TOKEN: ${{ github.token }}
   commit_and_push:
