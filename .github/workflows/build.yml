@@ -4,9 +4,7 @@ on:
   push:
     paths:
       - 'FFmpeg.Build/**'
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
     inputs:
       doRelease:
@@ -54,6 +52,10 @@ jobs:
           echo "rawname=${IMG/ /-}" >> $GITHUB_OUTPUT
       - name: Stop Commands
         run: T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
+      - name: echo ls -a
+        run: |
+          ls -a
+          cd FFmpeg.Build && ls -a
       - name: Build target base image
         uses: docker/build-push-action@v5
         with:
@@ -183,7 +185,7 @@ jobs:
       - name: Get download cache key
         id: dl_cache
         run: |
-          echo "dltagname=$(./FFmpeg.Build/util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
+          echo "dltagname=$(./util/get_dl_cache_tag.sh)" >> $GITHUB_OUTPUT
       - name: Stop Commands
         run: T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
       - name: Generate Dockerfile
