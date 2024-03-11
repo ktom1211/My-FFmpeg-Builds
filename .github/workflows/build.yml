@@ -254,7 +254,15 @@ jobs:
         with:
           name: ffmpeg-${{ steps.strs.outputs.artifact_slug }}
           overwrite: true
-          path: artifacts/*
+          path: FFmpeg.Build/artifacts/*
+      - name: Debug to check artifacts files
+        run: |
+          # 各ディレクトリの中身を確認してartifactが正しくアップロードされているか確認する
+          # ここはただのデバッグ用なので、各コマンドのエラーは無視して続行する
+          set +e
+          ls -la
+          ls -la FFmpeg.Build
+          ls -la FFmpeg.Build/artifacts
     outputs:
       artifact_slug: ${{ steps.strs.outputs.artifact_slug }}
   publish_release:
@@ -320,6 +328,15 @@ jobs:
       run: |
         git config user.name ${{ github.event.pusher.name }}
         git config user.email ${{ github.event.pusher.email}}
+    - name: Debug to check artifacts files
+      run: |
+        # 各ディレクトリの中身を確認してartifactが正しくアップロードされているか確認する
+        # ここはただのデバッグ用なので、各コマンドのエラーは無視して続行する
+        set +e
+        ls -la
+        ls -la FFmpeg.Build
+        ls -la FFmpeg.Build/artifacts
+        echo "artifact_slug=${{ needs.build_ffmpeg.outputs.artifact_slug }}"
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
